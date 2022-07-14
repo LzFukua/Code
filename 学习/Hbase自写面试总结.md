@@ -85,3 +85,17 @@ Region过小就会发送很多次compact操作,每次都会读一遍重写写到
 1. region过多有可能会导致分布不均匀的情况,就会使得查询速度效率低
 2. 就算分布均匀了,那也会在region分裂的时候查询数据的时候横跨的region多
 3. 而且如果列族过多,列族里有个memstore会占内存消耗内存
+
+---
+###Hbase写数据的流程
+客户端先去访问Zookeeper Meta表在哪,接着去找有这个表的RegionServer,再查自己所要找的Region在哪,然后去请求机器开始写数据,首先是把自己的操作流程写在WAL中,然后将数据写到memStore上,当MemStore达到阈值之后就会将数据flush到磁盘上形成StoreFile.
+
+###Hbase读数据的流程
+客户端去问Zookeeper Meta表在哪,接着去找那张表的RegionServer去要,再查自己所要找的region在哪,然后去请求机器开始写数据.
+第一步是初始化自己的迭代器,创建一些Scanner去读MemStore和StoreFile,再读StoreFlie的时候是根据布隆过滤器去判断目标行键是不是在该文件中,再根据底层的LSM树快速的找到目标行键所在block,再去查看blockcache是否有这个数据,如果有就返回缓存的,没有就返回磁盘里的,最后把两个Scanner的结果收集到一起合并结果取最新版本返回客户端.
+
+###Region怎么预建分区
+预分区的主要目的是再创建表的时候指定分区数,提前规划表里面有多少个分区以及它的范围,这样存储的时候行键就能按照分区取存储,这样就能避免热点问题
+通常有两种方案
+1.shell方法 创表的时候有个splits
+2.java程序控制,有个参数可以指定与分区的splitKey
