@@ -148,5 +148,38 @@ cache和persist的数据是缓存到内存或者HDFS上,会被清除,不会切�
 ###为什么说rdd中并没有真正存储数据？而触发rdd上的行动算子时又能拿到计算结果是为什么？
 > 因为RDD存储的是里面的compute方法套了前一个rdd的转换逻辑,而行动算子触发了runjob,会追溯到初代RDD获取数据的位置再根据计算逻辑处理数据得到结果
 
+---
+
+###spark-sql 中 dataset--dateframe--RDD的转化方式
+> 1. RDD转换成dataset 
+>   1. 需要隐式传入 import spark.implicits._ 然后createDataSet(rdd)
+>   2. .toDS方法
+> 2. RDD转换成dataframe
+>   1. 元组类型的RDD可以直接转成df .toDF方法
+>   2. caseclass类 createDataFrame(rdd,classof[xxx]) 反射
+>   3. java类 需要一整套javabean后才能反射传入 (get方法要实现)
+> 3. ds或者df转成RDD --> 直接 ds.rdd / df.rdd
+> 4. ds转df .toDF()方法  括号里可以加字段名
+> 5. df转ds 
+>   1. .as[case class] 传入一个case class类型
+>   2. frame.map({case Row (id:Int,name:String,age:Int)=> case class(id,name,age)}) 模式转换
+
+---
+
+###如何理解RDD,DataFrame,DataSet 
+1. RDD是弹性分布式数据集,是Spark中最基本的数据抽象
+2. DataFrame是一个分布式数据容器,每一行的固定类型为ROW,还记录了数据的结构信息(schema),性能上比RDD要高(因为执行计划得到了优化),但不安全
+3. DataSet每一行的数据类型都是不确定的,dataframe为dataset的一类而已,dataset[ROW]
+
+---
+
+###spark-sql 底层转换原理(执行过程)
+1. sql语句会传入到sqlparser中生成一个未绑定元数据的逻辑执行计划
+2. 接着传入到Analyzer分析器中去绑定元数据信息catalog,然后返回一个DataSet
+3. 再传入到optimizer优化器中去进行优化,优化有谓词下推,列裁剪,常量替换,常量累加等等
+4. 传入到planner中生成物理执行计划
+5. 调用execute方法触发了里面的getByteArrayRDD,调用了docodeGen以及inputRDDs
+6. docodeGen是将代码进行了编译,反射,实例化,生成了一个包含stage的计算逻辑的迭代器,而inputRDDs是用了mappartitionswithindex将迭代器传入后生成了一个新的RDD,这个RDD就可以用来做打印等事情
 
 
+---
