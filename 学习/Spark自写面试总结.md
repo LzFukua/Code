@@ -1,10 +1,6 @@
 ###什么是Spark
 Spark是一种基于内存的计算的开源框架,核心是RDD
 
----
-
-###stage的划分过程
-以行动算子的runjob方法开始提交,根据RDD的血缘关系生成DAG有向无环图,再去Dviver端调用里面的dagScheduler方法,,拿到DAG后去根据当前job的finalRDD往前推断,遇到了窄依赖就将该RDD收入到stage里,而遇到宽依赖也就是Shuffle就会从该处切开生成新的stage,而一共只有两个stage名字,在结尾的叫resultstage,其余的都是shufferMapStage
 
 ---
 
@@ -90,6 +86,12 @@ RDD有五大特性
 
 ---
 
+###stage的划分过程
+以行动算子的runjob方法开始提交,根据RDD的血缘关系生成DAG有向无环图,再去Dviver端调用里面的dagScheduler方法,,拿到DAG后去根据当前job的finalRDD往前推断,遇到了窄依赖就将该RDD收入到stage里,而遇到宽依赖也就是Shuffle就会从该处切开生成新的stage,而一共只有两个stage名字,在结尾的叫resultstage,其余的都是shufferMapStage
+
+
+---
+
 ###reduceByKey与groupByKey的区别,哪一种更具优势?
 redeceBykey按照key进行聚合,在shuffer之前有预聚合的操作,返回结果是RDD
 > reduceByKey((x1,x2)=>x1+x2) x1为第一个元素,之后为每次计算的结果 x2为之后的元素
@@ -134,4 +136,17 @@ cache和persist的数据是缓存到内存或者HDFS上,会被清除,不会切�
 1. 统一内存区占了百分之六十,里面分了缓存内存区和执行缓存区
 2. 其他区,占了百分之四十,用于定义自定义数据结构或者是存放Spark元数据
 3. 预留区,默认为300M用来进行容错性
+
+---
+
+###为什么scala的迭代器上的map/flatmap...算子，具有lazy执行的特性？
+> scala迭代器里的那些转换算子底层并没有调用HashNext和Next方法,而是根据逻辑创建了一个新的迭代器
+
+###为什么rdd的transformation算子，具有lazy执行的特性？
+> 因为RDD的转换算子底层没有触发阶段划分,job提交或者task提交的动作,而只是根据逻辑创健了一个新的RDD实例返回
+
+###为什么说rdd中并没有真正存储数据？而触发rdd上的行动算子时又能拿到计算结果是为什么？
+> 因为RDD存储的是里面的compute方法套了前一个rdd的转换逻辑,而行动算子触发了runjob,会追溯到初代RDD获取数据的位置再根据计算逻辑处理数据得到结果
+
+
 
