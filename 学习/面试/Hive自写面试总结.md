@@ -187,16 +187,14 @@ LATERAL VIEW explode (split(city,',')) addr_tmp AS city_n
 湖南      常德市
 */
 ```
+---
+###Hive order by 排序时null值的处理
+![](images/2022-07-18-15-50-48.png)
 
 
-
-
-
-
-
-
-
-
+###HIve != 遇到空值时的处理
+1. NVL(参数1,参数2,参数3) 函数 
+2. if(a='',未知,a)
 
 
 
