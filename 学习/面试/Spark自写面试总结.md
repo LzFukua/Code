@@ -198,6 +198,11 @@ groupByKey按照key进行聚合分组,直接进行shuffer
 ###为什么需要划分Stage?
 > 因为一个job任务中可能会有大量的宽窄依赖出现,划分stage就是让一些任务能都是窄依赖然后去并行的去执行任务,提高效率
 
+
+###map 和 mappartition 算子的区别
+1. map是对Rdd中 的每一个元素作用上一个函数,
+2. mappartition是将函数作用到分区级别 但可能回引发OOM(内存溢出)
+
 ---
 
 ## Spark中的数据倾斜问题和解决的方法

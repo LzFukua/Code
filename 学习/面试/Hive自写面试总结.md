@@ -197,6 +197,11 @@ LATERAL VIEW explode (split(city,',')) addr_tmp AS city_n
 2. if(a='',未知,a)
 
 
+###hive sql题 
+![](images/2022-07-18-23-22-17.png)
+![](images/2022-07-18-23-22-27.png)
+简单来说就是用space函数去传入两值相减得到的天数生成一串(0 1 2)这样的内容,再用split切割后得到一串数组后炸开,再用select 查询时最后一天对每个炸开的数相减,就能得到日期
+
 
 
 
