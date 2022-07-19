@@ -200,8 +200,8 @@ groupByKey按照key进行聚合分组,直接进行shuffer
 
 
 ###map 和 mappartition 算子的区别
-1. map是对Rdd中 的每一个元素作用上一个函数,
-2. mappartition是将函数作用到分区级别 但可能回引发OOM(内存溢出)
+1. map是对RDD的所有元素进行操作
+2. mappartition是将函数作用到分区级别,也就是对所有RDD分区进行操作 但可能会引发OOM(内存溢出)
 
 ---
 
