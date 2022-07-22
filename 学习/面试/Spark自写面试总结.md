@@ -168,7 +168,30 @@ groupByKey按照key进行聚合分组,直接进行shuffer
 3. 再传入到optimizer优化器中去进行优化,优化有谓词下推,列裁剪,常量替换,常量累加等等
 4. 传入到planner中生成物理执行计划
 5. 调用execute方法触发了里面的getByteArrayRDD,调用了docodeGen以及inputRDDs
-6. docodeGen是将代码进行了编译,反射,实例化,生成了一个包含stage的计算逻辑的迭代器,而inputRDDs是用了mappartitionswithindex将迭代器传入后生成了一个新的RDD,这个RDD就可以用来做打印等事情
+6. docodeGen是将代码进行了编译,反射,实例化,生成了一个包含stage的计算逻辑的迭代器,而inputRDDs是调用用了mappartitionswithindex将迭代器传入后生成了一个新的RDD,这个RDD就可以用来做打印等事情
+
+
+---
+
+### 任务生成的全过程
+1. 调用SparkSubmit类，内部执行submit --> doRunMain -> 通过反射获取应用程序的主类对象 --> 执行主类的main方法。
+2. 构建SparkConf和SparkContext对象，在SparkContext入口做了三件事，创建了SparkEnv对象（创建了ActorSystem对象），TaskScheduler（用来生成并发送task给Executor），DAGScheduler（用来划分Stage）。
+3. ClientActor将任务信息封装到ApplicationDescription对象里并且提交给Master。
+4. Master收到ClientActor提交的任务信息后，把任务信息存在内存中，然后又将任务信息放到队列中。
+5. 当开始执行这个任务信息的时候，调用scheduler方法，进行资源的调度。
+6. 将调度好的资源封装到LaunchExecutor并发送给对应的Worker。
+7. Worker接收到Master发送过来的调度信息（LaunchExecutor）后，将信息封装成一个ExecutorRunner对象。
+8. 封装成ExecutorRunner后，调用ExecutorRunner的start方法，开始启动 CoarseGrainedExecutorBackend对象。
+9. Executor启动后向DriverActor进行反向注册。
+10. 与DriverActor注册成功后，创建一个线程池（ThreadPool），用来执行任务。
+11. 当所有的Executor注册完成后，意味着作业环境准备好了，Driver端会结束与SparkContext对象的初始化。
+12. 当Driver初始化完成后（创建了sc实例），会继续执行我们提交的App的代码，当触发了Action的RDD算子时，就触发了一个job，这时就会调用DAGScheduler对象进行Stage划分。
+13. DAGScheduler开始进行Stage划分。
+14. 将划分好的Stage按照区域生成一个一个的task，并且封装到TaskSet对象，然后TaskSet提交到TaskScheduler。
+15. TaskScheduler接收到提交过来的TaskSet，拿到一个序列化器，对TaskSet序列化，将序列化好的TaskSet封装到LaunchExecutor并提交到DriverActor。
+16. 把LaunchExecutor发送到Executor上。
+17. Executor接收到DriverActor发送过来的任务（LaunchExecutor），会将其封装成TaskRunner，然后从线程池中获取线程来执行TaskRunner。
+18. TaskRunner拿到反序列化器，反序列化TaskSet，然后执行App代码，也就是对RDD分区上执行的算子和自定义函数。
 
 
 ---
@@ -197,6 +220,12 @@ groupByKey按照key进行聚合分组,直接进行shuffer
 
 ###为什么需要划分Stage?
 > 因为一个job任务中可能会有大量的宽窄依赖出现,划分stage就是让一些任务能都是窄依赖然后去并行的去执行任务,提高效率
+
+###spark 脚本中的jar 是什么意思  
+> 这些 jar 将被包含在 driver 和 executor 的 classpath 下执行jar包
+
+###spark做缓存时候缓存在哪里
+>在executor的内存里
 
 
 ###map 和 mappartition 算子的区别
@@ -229,3 +258,33 @@ groupByKey按照key进行聚合分组,直接进行shuffer
 （5）方案5：提高数据的处理频率,降低单次数据处理量,批次投入到partition中,这样数据量就会少一些
 （6）方案6：减少spark任务的并行度,减少executor数量,但增加executor内存和核数
 （7）方案7: 精简字段,让value的大小减少
+
+
+---
+###为什么Spark Application在没有获得足够的资源，job就开始执行了，可能会导致什么什么问题发生?
+会导致执行该job时候集群资源不足，导致执行job结束也没有分配足够的资源，分配了部分Executor，该job就开始执行task，应该让task的调度线程和Executor资源申请是异步的；
+所以应该申请完所有的资源再执行job
+需要将
+
+spark.scheduler.maxRegisteredResourcesWaitingTime 这个参数设置的大一些
+在执行前最大等待申请资源的时间，默认30s。 
+
+spark.scheduler.minRegisteredResourcesRatio 这个设置为 1
+实际注册的资源数占预期需要的资源数的比例，默认0.8
+但是应该结合实际考虑否则很容易出现长时间分配不到资源，job一直不能运行的情况。
+
+---
+###MR和spark的区别
+1. MR的map端中间结果会落到磁盘上,而spark是存到内存中
+2. MR是多进程单线程,Spark是多进程多线程
+3. MR运行在yarn上,spark有local standAlone yarn模式
+4. spark容错高,因为RDD有依赖关系实现计算流程的重建,而mapreduce就只能重新计算
+5. spark的API比MR要更多一些,spark更灵活
+---
+###MR和sparkshuffle有什么区别
+1. 功能上,MR的shuffle和sparkshuffle没什么区别,都是map端的数据分区
+2. 但方案上MRshuffle是基于合并排序的思想进行,而spark是可选择的聚合
+
+
+---spark sql 和 hive sql的区别
+spark的计算引擎就是spark本身,而hive计算引擎是MR,且sparksql有很多优化在opitimizer里.

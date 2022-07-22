@@ -55,7 +55,7 @@ Namenode就知道他版本号不对劲,就让他删掉那个损坏的block块
 2.	Yarn就会根据文件的切片信息去计算将要启动的maptask数量,接着去启动它,maptask就去调用inputformat方法去HDFS上面读取文件,Inputformat方法又再去调用RecordRead方法,将数据以行首字母的偏移量为key,一行数据为value传给自己写的mapper方法
 3.	进行mapper方法逻辑处理之后就将数据传到分区方法中,对数据进行一个分区标注后送到环形缓冲区里
 4.	在溢写之前会做快速排序,然后溢写出来产生的文件也会进行归并排序,然后将文件存储到磁盘上,再启动一定量的redeceTask
-5.	reduceTask就会复制那些文件到自己的环形缓冲区中去溢写,等数据拉取完毕会进行一次归并排序,归并完通过GroupingComparator方法对文件进行分组,然后将相同key值的数据调用自己写的Reduce方法,一次读取一组
+5.	reduceTask就会复制那些文件到自己的缓冲区中去溢写,等数据拉取完毕会进行一次归并排序,归并完通过GroupingComparator方法对文件进行分组,然后将相同key值的数据调用自己写的Reduce方法,一次读取一组
 6.	最后调用Outputformat方法里的RecordWrite的方法将数据以KV的形式写出到HDFS上
 
 ---
@@ -65,7 +65,7 @@ Namenode就知道他版本号不对劲,就让他删掉那个损坏的block块
 资源管理器负责整个集群资源的调度:调度器（Scheduler）和ApplicationsMaster（简称ASM）。
 调度器会根据特定调度器实现调度算法，结合作业所在的队列资源容量，将资源按调度算法分配给每个任务。分配的资源将用容器（container）形式提供，容器是一个相对封闭独立的环境，已经将CPU、内存及任务运行所需环境条件封装在一起。通过容器可以很好地限定每个任务使用的资源量。YARN调度器目前在生产环境中被用得较多的有两种：容量调度器(默认)（Capacity Scheduler）和公平调度器（Fair Scheduler）,FIFO调度器不经常用。
 
-1. ApplicationMaster（简称AM）：
+2. ApplicationMaster（简称AM）：
 每个提交到集群的作业（job）都会有一个与之对应的AM来管理。它负责进行数据切分，并为当前应用程序向RM去申请资源，当申请到资源时会和NodeManager通信，启动容器并运行相应的任务。此外，AM还负责监控任务（task）的状态和执行的进度。
 
 3. NodeManage（简称NM）：
@@ -81,11 +81,11 @@ NodeManager负责管理集群中单个节点的资源和任务，每个节点对
 ##YARN的资源调度工作流程
 1.	客户端向YARN中提交应用程序，其中包括ApplicationMaster程序、启动ApplicationMaster的命令、用户程序等。
 2.	作业提交后，ResouceManager根据从NodeManage收集的资源信息，在有足够资源的节点分配一些容器，并与对应的NodeManage进行通信，要求它在该容器中启动ApplicationMaster。
-3.	ApplicationMaster首先向ResourceManager注册，这样用户可以直接通过ResourceManager查看应用程序的运行状态，然后它将为各个任务申请资源，并监控它的运行状态，直到运行结束。
+3.	ApplicationMaster首先向ResourceManager注册
 4.	ApplicationMaster采用轮询的方式通过RPC协议向ResourceManager申请和领取资源。
 5.	一旦ApplicationMaster申请到资源后，便与对应的NodeManager通信，要求它启动任务。
 6.	NodeManager为任务设置好运行环境后，将任务启动命令写到一个脚本中，并通过运行该脚本启动任务。
-7.	各个任务通过某个RPC协议向ApplicationMaster汇报自己的状态和进度，以让ApplicationMaster随时掌握各个任务的运行状态，从而可以在任务失败时重新启动任务。在应用程序运行过程	中，用户可以随时通过RPC向ApplicationMaster查询应用程序的当前运行状态。
+7.	各个任务通过某个RPC协议向ApplicationMaster汇报自己的状态和进度，以让ApplicationMaster随时掌握各个任务的运行状态，从而可以在任务失败时重新启动任务。在应用程序运行过程中，用户可以随时通过RPC向ApplicationMaster查询应用程序的当前运行状态。
 8.	应用程序运行完成后，ApplicationMaster向ResourceManager注销并关闭自己。
 
 ---
@@ -106,3 +106,5 @@ NodeManager负责管理集群中单个节点的资源和任务，每个节点对
 1.	partition的作用就是把数据归类,就会对每个reduce建立分区进行计算,加快计算效果
 2.	combiner相当于一个优化方案,优化map和reduce的数据传输量,差不多等于在map端也进行了一次reduce
 3.	combiner只应该用于reduce输入的keyvalue和输出的keyvalue类型一样的而且计算逻辑上combiner不能影响计算结果,像求平均值这种就会影响
+
+---

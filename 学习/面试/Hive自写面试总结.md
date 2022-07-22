@@ -63,6 +63,7 @@ RDBMS的SQL为标准SQL，功能较为强大。
 
 ---
 ##Hive的函数：UDF、UDAF、UDTF的区别
+首先他们都是自定义的函数,当内置函数满足不了业务需求的时候就自己开发
 *   UDF它就是针对一行进行处理然后返回一行 就像一列的String全都转成大写的函数
 *   UDAF就是处理多行数据但是返回一行 就像求最小值最大值 或者是平均值这种
 *   UDTF就是处理一行数据但是返回多行 就像函数里有个explode函数 把一行数据炸开返回多行
@@ -202,7 +203,9 @@ LATERAL VIEW explode (split(city,',')) addr_tmp AS city_n
 ![](images/2022-07-18-23-22-27.png)
 简单来说就是用space函数去传入两值相减得到的天数生成一串(0 1 2)这样的内容,再用split切割后得到一串数组后炸开,再用select 查询时最后一天对每个炸开的数相减,就能得到日期
 
-
+---
+### 怎么查看hive有什么自带的函数,怎么查看函数的详细信息
+show functions 和 desc functions extended xxx
 
 
 

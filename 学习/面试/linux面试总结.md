@@ -1,0 +1,19 @@
+###linux常用命令
+tail -f filename 查看文件内容
+df 查看文件系统磁盘使用情况
+ps -ef | grep …… 显示当前进程的状态
+cat filename| head -n 300 | tail -n +100 查看日志文件的100行到300行
+find 在指定目录下查找文件
+su 切换用户
+wc -l 统计文件行数
+
+
+
+
+###Linux中#!表示什么意思？
+用于“指定由哪个解释器来执行脚本” 
+
+
+###Linux中bash什么意思
+bash就是增强版的shell语言
+
