@@ -17,3 +17,12 @@ wc -l 统计文件行数
 ###Linux中bash什么意思
 bash就是增强版的shell语言
 
+
+### Linux查看端口是否占用命令
+netstat -anp |grep 端口号
+
+### Linux查看CPU使用情况命令
+top
+
+### Linux系统查看内存使用情况
+free
