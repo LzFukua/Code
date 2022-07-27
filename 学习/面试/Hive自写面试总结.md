@@ -6,7 +6,6 @@
 * **Order by** :会对整个表全局排序,因此只有一个reducer进程
 * **Sort by**:会在数据进入reducer之前完成排序,且设置reduce数量很多时,他就会在单个reduce生成的文件中排序,而不是全局排序
 * **Distribute by**:按照指定的字段对数据进行划分输出到不同的reduce中。
-
 * **Cluster by**:除了具有 distribute by 的功能外还兼具 sort by 的功能。
 
 
