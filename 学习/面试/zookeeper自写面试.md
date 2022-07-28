@@ -5,6 +5,10 @@
 过半机制,也就是当旧皇帝驾崩的时候,选新皇帝时必须要超过一半的人投票选举成功才可以让他当上皇帝,否则就不会让他当上.并且leader有年号epoch,如果大家看到他的年号落伍了就不理他.
 
 
-
-
-
+###zookeeper在HDFS的故障转移机制
+自动故障转移机制：
+1. active Namenode宕机(假死)。
+2. active Namenode zkfc检测到假死
+3. 通知另一台namenode的zkfc
+4. 另一台机机器强行杀死之前的active namenode
+5. 激活standby namenode，切为active状态

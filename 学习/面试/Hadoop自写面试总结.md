@@ -1,3 +1,8 @@
+###什么是hadoop
+狭义上来说,hadoop是一个分布式的软件框架,利用服务器集群对海量数据进行分布式处理
+广义上来说,是一个生态圈
+
+
 ##Hadoop 架构
 1. Hdfs是一个分布式存储管理系统 
 2. 优点是可以进行海量存储,而且也有高容错性,表现在数据丢失后还有副本,在大文件存储时能切割写入多次读取
@@ -39,7 +44,7 @@ Namenode就知道他版本号不对劲,就让他删掉那个损坏的block块
 
 ---
 
-##SecondaryNamenode 的工作机制是什么？
+##SecondaryNamenode 的工作机制是什么？(namenode元数据管理)
 首先是*namenode*自己有一个日志文件和镜像文件,SNN默认会每一个小时或者有一百万次日志操作就会通知一次NN去滚动日志信息,然后将NN的日志文件和镜像文件都给下载到自己的本机上,将镜像文件反序列化到内存后重演一次日志文件再序列化进自己磁盘生成新的镜像文件,再把新的镜像文件返回给NN 
 
 ---
@@ -106,5 +111,20 @@ NodeManager负责管理集群中单个节点的资源和任务，每个节点对
 1.	partition的作用就是把数据归类,就会对每个reduce建立分区进行计算,加快计算效果
 2.	combiner相当于一个优化方案,优化map和reduce的数据传输量,差不多等于在map端也进行了一次reduce
 3.	combiner只应该用于reduce输入的keyvalue和输出的keyvalue类型一样的而且计算逻辑上combiner不能影响计算结果,像求平均值这种就会影响
+
+
+###MapReduce中的Combiner
+1. combiner是MR程序中Mapper和Reducer之外的一种组件
+2. combiner组件的父类就是Reducer
+3. combiner和reducer的区别在于运行的位置：
+         Combiner是在每一个maptask所在的节点运行
+         Reducer是接收全局所有Mapper的输出结果；
+4. combiner的意义就是对每一个maptask的输出进行局部汇总，以减小网络传输量
+具体实现步骤：
+   1. 自定义一个combiner继承Reducer，重写reduce方法
+   2. 在job中设置：  job.setCombinerClass(CustomCombiner.class)
+5. combiner能够应用的前提是不能影响最终的业务逻辑
+而且，combiner的输出kv应该跟reducer的输入kv类型要对应起来
+
 
 ---
