@@ -19,9 +19,9 @@
 ---
 
 ##Hdfs写数据流程
-1.	客户端带着文件路径通过RPC去找namenode问能不能上传,然后namenode就检查该文件,返回可不可以
-2.	客户端就会请求第一个Block块应该传输到哪个datanode节点
-3.	Namenode就会根据**副本放置策略**去进行节点分配,让datanode去找
+1.	客户端带着文件路径通过RPC去找namenode问能不能上传,然后namenode就检查该文件是否存在以及客户端是否有权限,返回可不可以
+2.	客户端就会请求上传第一个Block块
+3.	Namenode就会根据**副本放置策略**去进行节点分配回给客户端datanode地址
 4.	客户端就去和第一个节点去打通**pipleline**管道,第一个节点再去和第二个,第二个在和第三个节点去建立管道,然后逐级返回信息给客户端
 5.	客户端收到消息后就开始传输第一个block块,将内容读取到一个4kb的buf中,读满一个buf就往外flush出去,存到一个512b的chunk以及4b的checksum校验内容,接着将许多的chuck存满一个64kb的pactet包,然后将包放到dataqueue传输,传输出去后就放到ackqueue用来等待接收pipleline返回的应答
 6.	Datanode收到packet后先将这份文件序列化到磁盘上,然后再继续传输到下一个datanode上,直到传完,发送ack应答消息
