@@ -6,22 +6,23 @@
 * **Order by** :会对整个表全局排序,因此只有一个reducer进程
 * **Sort by**:会在数据进入reducer之前完成排序,且设置reduce数量很多时,他就会在单个reduce生成的文件中排序,而不是全局排序
 * **Distribute by**:按照指定的字段对数据进行划分输出到不同的reduce中。
-* **Cluster by**:除了具有 distribute by 的功能外还兼具 sort by 的功能。
+* **Cluster by**:除了具有 distribute by 的功能外还兼具 sort by 的功能 但是只能正序排列
 
 
 ---
 ##Hive小文件造成的原因与影响
-*  原因有动态分区导致的,以及数据源本身就会带很多的小文件
-  
+1. 动态分区导致的,以及数据源本身就会带很多的小文件
+2. 数据源本来就含有大量小文件
+3. sqoop增量导入的时候
+4. 分桶表 
 *  造成的影响一个是map数量变多,会严重影响性能,第二个是元数据会存到namenode里,小文件数量多了会影响namenode寿命,查找索引的速度也会变慢
-
 
 
 ---
 ##Hive小文件过多怎么解决
 1. 一般是使用hive自带的concatenate命令,但这个命令只支持ORC和RCFile文件类型 
    **也就是(alter table A concatenate)**
-2. 调成Map的数量,这个和任务切片的大小和文件数量有关,所以常用的调整要么是把切片大小改为256M,要么就是去用combineFlieformate的方法提前把小文件合并或者是压缩
+2. 调整Map的数量,这个和任务切片的大小和文件数量有关,所以常用的调整要么是把切片大小改为256M,要么就是去用combineFlieformate的方法提前把小文件合并或压缩
 3. 减少reduce的数量 直接去设置
 4. hadoop的archive命令小文件归档
 
@@ -46,7 +47,7 @@
     * 使用sum()   group by来替代count(distinct )。
 
 7. 实践与定位
-   * 因为实际上，绝大部分的数据倾斜都产生在Shuffle阶段，我们治理的办法一般是发现问题--定位问题--根据问题原因分类优化(例如join,group by , count distinct)
+   * 实际上，绝大部分的数据倾斜都产生在Shuffle阶段，我们治理的办法一般是发现问题--定位问题--根据问题原因分类优化(例如join,group by , count distinct)
 
         * 我们首先找到执行时间较长的stage，判断stage是否倾斜。倾斜的指标：stage的其task的执行时长和处理数据量的（max/mid）的值都大于2，且该stage的执行时长大于1800s)可能会有多个执行执行时间比较长的stage存在数据倾斜，请分别定位治理。注意，存在数据倾斜的stage不一定执行时间最长。
 
@@ -102,7 +103,7 @@ RDBMS的SQL为标准SQL，功能较为强大。
 ##Hive转化成MR的过程(了解一下,走个大概)
 
 ![](images/2022-06-30-20-47-24.png)
-大致就是首先把sql语句转化成语法树,根据语法树生成了QueryBlock,然后遍历QueryBlock,翻译为操作执行树,再优化这个逻辑之后翻译成MR的任务,最后执行任务
+大致就是首先把sql语句转化成语法树,根据语法树生成了QueryBlock,然后遍历QueryBlock,翻译为操作执行树,再优化这个逻辑之后翻译成MR的任务,物理层优化器进行mapreduce任务的变换,生成最终的执行计划
 
 ---
 ##Hive企业级调优方案
@@ -201,6 +202,11 @@ LATERAL VIEW explode (split(city,',')) addr_tmp AS city_n
 ![](images/2022-07-18-23-22-17.png)
 ![](images/2022-07-18-23-22-27.png)
 简单来说就是用space函数去传入两值相减得到的天数生成一串(0 1 2)这样的内容,再用split切割后得到一串数组后炸开,再用select 查询时最后一天对每个炸开的数相减,就能得到日期
+
+
+
+###HIve随机抽样百分之10的数据
+![](images/2022-08-09-21-58-51.png)
 
 ---
 ### 怎么查看hive有什么自带的函数,怎么查看函数的详细信息

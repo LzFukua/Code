@@ -38,7 +38,9 @@ Namenode就知道他版本号不对劲,就让他删掉那个损坏的block块
 ##Hdfs读数据
 1.	客户端会带着读取路径也是RPC连接方式去问namenode ,喂喂喂我要找的东西在哪呀,然后namenode就检查有没有这个文件,有就跟返回信息回去,告诉他那些block块在哪里
 2.	然后按照集群拓扑能得出datanode与客户端的距离,客户端就会找最近的下载下来
-3.	结束后就关闭输入流
+3. 底层上本质是调用DataInputStream的read方法,并行读取block信息
+4. 读取完一个block都会进行checksum验证,如果出现错误就通知namenode,然后再从另一个节点读取 
+4.	结束后就关闭输入流
 
 
 
@@ -58,7 +60,7 @@ Namenode就知道他版本号不对劲,就让他删掉那个损坏的block块
 ##简述MR的工作流程
 1.	待处理的文本通过submit()方法，获取待处理的数据信息，然后根据切片机制，生成切片文件。把切片方法文件和三个资源配置文件(job.split,wc.jar,job.xml)提交在资源路径。 
 2.	Yarn就会根据文件的切片信息去计算将要启动的maptask数量,接着去启动它,maptask就去调用inputformat方法去HDFS上面读取文件,Inputformat方法又再去调用RecordRead方法,将数据以行首字母的偏移量为key,一行数据为value传给自己写的mapper方法
-3.	进行mapper方法逻辑处理之后就将数据传到分区方法中,对数据进行一个分区标注后送到环形缓冲区里
+3.	进行mapper方法逻辑处理之后就将数据传到分区方法中,对数据进行一个分区标注后送到环形缓冲区里,环形缓冲区的作用是批量收集mapper结果,减少磁盘IO.
 4.	在溢写之前会做快速排序,然后溢写出来产生的文件也会进行归并排序,然后将文件存储到磁盘上,再启动一定量的redeceTask
 5.	reduceTask就会复制那些文件到自己的缓冲区中去溢写,等数据拉取完毕会进行一次归并排序,归并完通过GroupingComparator方法对文件进行分组,然后将相同key值的数据调用自己写的Reduce方法,一次读取一组
 6.	最后调用Outputformat方法里的RecordWrite的方法将数据以KV的形式写出到HDFS上
@@ -84,13 +86,13 @@ NodeManager负责管理集群中单个节点的资源和任务，每个节点对
 
 ---
 ##YARN的资源调度工作流程
-1.	客户端向YARN中提交应用程序，其中包括ApplicationMaster程序、启动ApplicationMaster的命令、用户程序等。
-2.	作业提交后，ResouceManager根据从NodeManage收集的资源信息，在有足够资源的节点分配一些容器，并与对应的NodeManage进行通信，要求它在该容器中启动ApplicationMaster。
+1.	客户端向YARN中提交应用程序
+2.	作业提交后，ResouceManager根据从NodeManage收集的资源信息，在有足够资源的节点分配容器，并与对应的NodeManage进行通信，要求它在该容器中启动ApplicationMaster。
 3.	ApplicationMaster首先向ResourceManager注册
 4.	ApplicationMaster采用轮询的方式通过RPC协议向ResourceManager申请和领取资源。
 5.	一旦ApplicationMaster申请到资源后，便与对应的NodeManager通信，要求它启动任务。
-6.	NodeManager为任务设置好运行环境后，将任务启动命令写到一个脚本中，并通过运行该脚本启动任务。
-7.	各个任务通过某个RPC协议向ApplicationMaster汇报自己的状态和进度，以让ApplicationMaster随时掌握各个任务的运行状态，从而可以在任务失败时重新启动任务。在应用程序运行过程中，用户可以随时通过RPC向ApplicationMaster查询应用程序的当前运行状态。
+6.	NodeManager为任务设置好运行环境后,启动Task。
+7.	各个Task向ApplicationMaster汇报自己的状态和进度，并于ApplicationMaster保持心跳,以让ApplicationMaster随时掌握各个任务的运行状态，从而可以在任务失败时重新启动任务。
 8.	应用程序运行完成后，ApplicationMaster向ResourceManager注销并关闭自己。
 
 ---
