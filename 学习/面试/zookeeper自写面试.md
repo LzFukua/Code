@@ -12,3 +12,13 @@
 3. 通知另一台namenode的zkfc
 4. 另一台机机器强行杀死之前的active namenode
 5. 激活standby namenode，切为active状态
+
+
+
+###zookeeper是什么
+
+
+###zookeeper是如何保证数据的一致性的
+
+
+###zookeeper是怎么保证HDFS高可用的
