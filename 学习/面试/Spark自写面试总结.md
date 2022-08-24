@@ -286,5 +286,10 @@ spark.scheduler.minRegisteredResourcesRatio 这个设置为 1
 2. 但方案上MRshuffle是基于合并排序的思想进行,而spark是可选择的聚合
 
 
----spark sql 和 hive sql的区别
+---
+
+###spark sql 和 hive sql的区别
 spark的计算引擎就是spark本身,而hive计算引擎是MR,且sparksql有很多优化在opitimizer里.
+
+
+###spark join有几种 分别是什么  
