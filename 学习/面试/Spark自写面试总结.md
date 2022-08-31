@@ -264,10 +264,23 @@ groupByKey按照key进行聚合分组,直接进行shuffer
 
 ---
 
-### Spark AQE机制
+### Spark 3.0 AQE自适应查询执行机制
 1. 自动分区合并,shuffle后如果reduce task数据分布层次不齐,AQE就自动合并过小的分区
-2. join策略调整 如果某张表过滤之后尺寸小于广播变量阈值,这张表就会降级为broadcast joins
+2. join策略调整 如果某张表过滤之后尺寸小于广播变量阈值,这张表就会降级为broadcast joins ,也就是把这张表给广播了
 3. 自动倾斜处理 自动拆分reduce阶段过大的数据分区,降低单个reduce task的工作负载
+
+
+### Spark 3.0 DPP动态分区裁剪机制
+要使用DPP的前提条件为
+1. 那张事实表必须是分区表
+2. 只支持等值的join 也就是left join right join inner join 这种
+3. 维度表过滤之后的数据需要小于广播阈值 
+
+然后他就会根据关联关系去只扫描满足条件的字段,减少数据扫描量
+
+
+---
+
 
 
 ---
