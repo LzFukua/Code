@@ -87,7 +87,7 @@ RDD有五大特性
 ---
 
 ###stage的划分过程
-以行动算子的runjob方法开始提交,根据RDD的血缘关系生成DAG有向无环图,再去Dviver端调用里面的dagScheduler方法,,拿到DAG后去根据当前job的finalRDD往前推断,遇到了窄依赖就将该RDD收入到stage里,而遇到宽依赖也就是Shuffle就会从该处切开生成新的stage,而一共只有两个stage名字,在结尾的叫resultstage,其余的都是shufferMapStage
+以行动算子的runjob方法开始提交,根据RDD的血缘关系生成DAG有向无环图,再去Driver端调用里面的dagScheduler方法,,拿到DAG后去根据当前job的finalRDD往前推断,遇到了窄依赖就将该RDD收入到stage里,而遇到宽依赖也就是Shuffle就会从该处切开生成新的stage,而一共只有两个stage名字,在结尾的叫resultstage,其余的都是shufferMapStage
 
 
 ---
@@ -257,7 +257,8 @@ groupByKey按照key进行聚合分组,直接进行shuffer
 这时候会有几种解决办法
    1. 减少spark任务的并行度,减少executor数量,但增加executor内存和核数,去让任务更加多资源运算且不会浪费资源.
    2. 提高数据的处理频率,降低单次数据处理量,批次投入到partition中,这样数据量就会少一些只是任务量多而已
-   3. 两阶段聚合（局部聚合+全局聚合）
+   3. 将小表广播出去
+   4. 两阶段聚合（局部聚合+全局聚合）
 将原本相同的key通过添加随机前缀的方式，变成多个不同的key，就可以让原本被一个task处理的数据分散到多个task上去做局部聚合，这样就解决了单个task处理数据量过多的问题。接着去除掉随机前缀，再次进行一次全局聚合，就可以得到最终的结果；
 
 
