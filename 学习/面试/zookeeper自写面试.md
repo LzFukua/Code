@@ -19,4 +19,4 @@
 ZooKeeper是一个分布式应用程序协调服务，用作主从协调，服务器节点上下线，元数据管理
 
 
-###zookeeper是怎么保证HDFS高可用的
+### zookeeper是怎么保证HDFS高可用的

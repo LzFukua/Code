@@ -11,3 +11,7 @@ sqoop增量导入的方法  √
 
 --hive-partition-key 'report_date' \ 
 对这个字段分区
+
+
+### sqoop 默认几个map
+4个

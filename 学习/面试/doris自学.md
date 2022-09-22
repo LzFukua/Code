@@ -31,7 +31,7 @@ doris的分区是管理单元 并不是物理单元 如果要删一个分区 这
 所以一定要写distribute by   可以不写partition by 
 
 
-表模型 
+### 表模型 
 Aggregate    聚合模型
 Unique       去重数据模型
 Duplicate    可重复数据模型
