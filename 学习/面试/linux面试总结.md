@@ -11,7 +11,7 @@
 
 **su** 切换用户
 
-**netstat -tunpl |grep** 端口号  Linux查看端口是否占用命令
+**netstat -tunpl |grep端口号**   Linux查看端口是否占用命令
 
 **top**   Linux查看CPU使用情况命令
 
