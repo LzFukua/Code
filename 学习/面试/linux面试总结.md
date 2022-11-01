@@ -2,6 +2,12 @@
 ### filename 查看文件内容(查看错误日志)
 tail 
 
+### 如何查看文件夹下包含ABC字符串的文件
+find /etc -type f | xargs grep -l 'abc'
+
+grep -rl abc /etc
+
+
 ### xsync：集群批量同步文件命令
 
 ### 查看文件系统磁盘使用情况
@@ -36,8 +42,7 @@ ps aux
 ### Linux中 #! 表示什么意思？
 用于指定由哪个解释器来执行脚本
 
-## #Linux中bash什么意思
-bash就是增强版的shell语言
+
 
 ### shell脚本如何使用hive进行算术运算
 sql = "..." 
@@ -61,5 +66,10 @@ sed
 ### shell脚本判断上一个命令是否执行成功
 $? 如果返回0代表成功 其他代表失败    $
 
+## #Linux中bash什么意思
+bash就是增强版的shell语言
 
+### sh脚本有哪几种执行方式
+1. bash sh 或者 直接sh 
+2. source sh
 

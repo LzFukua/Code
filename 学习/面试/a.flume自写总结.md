@@ -5,7 +5,7 @@ channel 缓存读取出来的数据
 sink  写出数据
 
 ### 你们工作时使用的是什么source  channel, 为什么使用他们  
-平时我们工作上使用的source是TailDir,可以监控多个目录嘛,而且也有position机制能让我实时监控数据的变化
+平时我们工作上使用的source是TailDir,可以监控多个目录嘛且能保证安全,而且也有position机制能让我实时监控数据的变化
 和断点续传的功能,对于channel 我们使用的是File channel,因为他可以保证数据彻底的安全,且还可以加checkpoint机制加个副本
 
 
